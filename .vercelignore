@@ -1,0 +1,15 @@
+.env
+.env.*
+.git
+.gitignore
+node_modules
+docs/
+schemas/
+connectors/
+flink/
+scripts/
+TECHNICAL_PLAN.md
+claude.md
+index.js
+*.log
+.DS_Store

@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://maverick.ai/schemas/learner.recommendations-value.json",
+  "title": "LessonRecommendation",
+  "description": "Emitted by the Flink job into learner.recommendations after each LearningEvent. Partition key = learner_id.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "event_id", "occurred_at", "learner_id", "recommendation"],
+  "properties": {
+    "schema_version":  { "type": "integer", "minimum": 1 },
+    "event_id":        { "type": "string", "minLength": 1 },
+    "occurred_at":     { "type": "string" },
+    "learner_id":      { "type": "string", "minLength": 1 },
+    "contact_channel": { "type": "string" },
+    "recommendation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subject", "difficulty", "next_scenario_prompt"],
+      "properties": {
+        "subject": { "type": "string" },
+        "difficulty": {
+          "type": "string",
+          "enum": ["easier", "same", "harder"]
+        },
+        "next_scenario_prompt":   { "type": "string", "minLength": 1 },
+        "estimated_duration_min": { "type": "integer", "minimum": 1, "maximum": 60 }
+      }
+    }
+  }
+}

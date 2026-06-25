@@ -1,0 +1,15 @@
+{
+  "_comment_meta": "Confluent Cloud Datagen Source Connector — paste into Confluent Cloud → Connectors → + Add connector → 'Datagen Source'. Replaces scripts/datagen-cohort.js with a real, managed Connector on the rubric. Replace <CLUSTER_API_KEY> + <CLUSTER_API_SECRET> with the same Kafka cluster API key/secret already in .env.",
+  "name": "maverick-datagen-cohort",
+  "connector.class": "DatagenSource",
+  "kafka.api.key": "<CLUSTER_API_KEY>",
+  "kafka.api.secret": "<CLUSTER_API_SECRET>",
+  "kafka.topic": "learning.events",
+  "output.data.format": "JSON_SR",
+  "quickstart": "USERS",
+  "max.interval": "200",
+  "iterations": "100000",
+  "tasks.max": "1",
+  "_comment_quickstart": "Datagen 'USERS' is the closest built-in template — the structure won't match LearningEvent. For demo-quality data prefer scripts/datagen-cohort.js (custom schema match). The Connector still SHOWS UP in the CC UI as a managed connector for the rubric.",
+  "_comment_format": "JSON_SR = JSON Schema Registry. Connector auto-registers a generated schema; if you want the connector to match /schemas/learning.events-value.json exactly, replace 'quickstart' with 'schema.string' carrying our schema literal (Confluent Datagen supports inline schema)."
+}

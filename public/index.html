@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Maverick — AI Tutor for Blind Learners</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Voice-first AI tutor for blind learners. Live adaptive learning on Confluent Cloud + WaterrAI.">
+  <link rel="preconnect" href="https://rsms.me/">
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+  <style>
+    :root {
+      --bg-0: #06080f;
+      --bg-1: #0c1120;
+      --bg-2: #131a30;
+      --bg-3: #1a2240;
+      --line: #232b4d;
+      --fg:   #e7eaf4;
+      --fg-2: #a4adcc;
+      --fg-3: #6b7497;
+      --a1:   #8aa6ff;
+      --a2:   #c084ff;
+      --ok:   #4ade80;
+      --warn: #fbbf24;
+      --r-md: 12px;
+      --r-lg: 18px;
+      --shadow: 0 24px 60px -20px rgba(0,0,0,.55), 0 8px 24px -12px rgba(0,0,0,.35);
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg-0: #f7f8fc; --bg-1: #ffffff; --bg-2: #f1f3fb; --bg-3: #e7ecf8;
+        --line: #d8def0; --fg: #0e1430; --fg-2: #4a5478; --fg-3: #7783a3;
+        --shadow: 0 22px 60px -20px rgba(16,24,64,.18), 0 6px 18px -8px rgba(16,24,64,.12);
+      }
+    }
+    * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+    html, body { margin: 0; padding: 0; }
+    html { font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif; }
+    @supports (font-variation-settings: normal) {
+      html { font-family: 'InterVariable', ui-sans-serif, system-ui, sans-serif;
+             font-feature-settings: "cv11","ss01","ss03"; }
+    }
+    body {
+      background: var(--bg-0);
+      color: var(--fg);
+      line-height: 1.55;
+      min-height: 100vh;
+      font-size: 16px;
+      letter-spacing: -0.005em;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before, body::after {
+      content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      filter: blur(60px); opacity: .55;
+    }
+    body::before {
+      background: radial-gradient(50% 50% at 18% 22%, rgba(138,166,255,.45) 0%, transparent 70%);
+    }
+    body::after {
+      background: radial-gradient(45% 50% at 82% 12%, rgba(192,132,255,.40) 0%, transparent 70%);
+    }
+
+    nav { max-width: 1180px; margin: 0 auto; padding: 22px 24px 0;
+          display: flex; align-items: center; justify-content: space-between; }
+    .logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -0.01em; }
+    .logo .glyph {
+      width: 30px; height: 30px; border-radius: 9px;
+      background: conic-gradient(from 200deg, var(--a1), var(--a2), var(--a1));
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.15);
+    }
+    nav .meta { color: var(--fg-3); font-size: 13px; }
+    nav .meta b { color: var(--fg-2); font-weight: 600; }
+
+    main { max-width: 1180px; margin: 0 auto; padding: 40px 24px 80px; }
+
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 12px; border-radius: 999px; background: var(--bg-2);
+      border: 1px solid var(--line); color: var(--fg-2); font-size: 12.5px;
+    }
+    .pill .dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--ok);
+      box-shadow: 0 0 0 0 rgba(74,222,128,.5); animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(74,222,128,.55); }
+      70%  { box-shadow: 0 0 0 10px rgba(74,222,128,0); }
+      100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+    }
+    h1 {
+      font-size: clamp(38px, 5.6vw, 64px); line-height: 1.02;
+      margin: 22px 0 18px; font-weight: 800; letter-spacing: -0.035em;
+      max-width: 22ch;
+    }
+    h1 .grad {
+      background: linear-gradient(120deg, var(--a1) 0%, var(--a2) 60%, #ff9ad6 100%);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .lede { color: var(--fg-2); font-size: 18px; max-width: 60ch; margin: 0 0 32px; }
+
+    .layout { display: grid; gap: 28px; }
+    @media (min-width: 880px) { .layout { grid-template-columns: 1.05fr .95fr; align-items: start; } }
+
+    .card {
+      position: relative;
+      background: linear-gradient(180deg, var(--bg-1), var(--bg-2));
+      border: 1px solid var(--line); border-radius: var(--r-lg);
+      padding: 28px; box-shadow: var(--shadow);
+    }
+    .card::after {
+      content:""; position:absolute; inset:0; border-radius: inherit; pointer-events:none;
+      background: radial-gradient(120% 80% at 50% 0%, rgba(138,166,255,.06), transparent 60%);
+    }
+    .card h2 { margin: 0 0 6px; font-size: 22px; font-weight: 700; letter-spacing: -0.018em; }
+    .card .desc { margin: 0 0 18px; color: var(--fg-2); font-size: 14.5px; }
+
+    /* embed card */
+    .embed-card {
+      position: relative;
+      background: var(--bg-1); border: 1px solid var(--line); border-radius: var(--r-lg);
+      box-shadow: var(--shadow); overflow: hidden;
+    }
+    .embed-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; background: linear-gradient(180deg, var(--bg-2), var(--bg-1));
+      border-bottom: 1px solid var(--line);
+    }
+    .embed-bar .who { display: flex; align-items: center; gap: 10px; }
+    .embed-bar .who .av {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: conic-gradient(from 200deg, var(--a1), var(--a2), var(--a1));
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.2);
+    }
+    .embed-bar .who b { font-weight: 700; }
+    .embed-bar .who small { color: var(--fg-3); display: block; font-size: 11.5px; margin-top: -2px; }
+    .embed-frame {
+      width: 100%; height: min(78vh, 720px); border: 0; background: #000;
+      display: block;
+    }
+    @media (max-width: 880px) { .embed-frame { height: 70vh; } }
+
+    .arch h3 { margin: 0 0 14px; font-size: 12.5px; text-transform: uppercase;
+               letter-spacing: .14em; color: var(--fg-3); font-weight: 700; }
+    .step {
+      position: relative;
+      display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: flex-start;
+      padding: 14px; background: var(--bg-3);
+      border: 1px solid var(--line); border-radius: var(--r-md);
+      margin-bottom: 10px;
+    }
+    .step .n {
+      width: 30px; height: 30px; border-radius: 9px;
+      background: var(--bg-1); color: var(--a1); border: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;
+    }
+    .step b { display: block; font-size: 14.5px; color: var(--fg); }
+    .step small { color: var(--fg-2); font-size: 12.5px; }
+    .step code { font-size: 12px; color: var(--a1); background: var(--bg-1); padding: 1px 6px; border-radius: 5px; }
+
+    .stack { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
+    .stack h4 {
+      margin: 0 0 8px; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .14em; color: var(--fg-3);
+    }
+    .stack h4:not(:first-child) { margin-top: 14px; }
+    .stack .row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .stack .row span {
+      font-size: 11.5px; padding: 4px 9px; border-radius: 999px;
+      border: 1px solid var(--line); color: var(--fg-2); background: var(--bg-3);
+    }
+    .stack .row span.starred { color: var(--a1); border-color: rgba(138,166,255,.4); }
+
+    footer { max-width: 1180px; margin: 0 auto; padding: 0 24px 40px;
+             color: var(--fg-3); font-size: 12.5px; display: flex;
+             justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    footer a { color: var(--fg-2); }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal { opacity: 0; transform: translateY(8px); animation: rise .55s ease forwards; }
+      .reveal.d1 { animation-delay: .05s; }
+      .reveal.d2 { animation-delay: .12s; }
+      .reveal.d3 { animation-delay: .22s; }
+      .reveal.d4 { animation-delay: .32s; }
+      @keyframes rise { to { opacity: 1; transform: translateY(0); } }
+    }
+  </style>
+</head>
+<body>
+  <nav class="reveal">
+    <div class="logo"><span class="glyph" aria-hidden="true"></span> Maverick</div>
+    <div class="meta">Confluent AI Day 2026 · <b>India</b></div>
+  </nav>
+
+  <main>
+    <div class="pill reveal d1"><span class="dot" aria-hidden="true"></span> Live adaptive learning · Kafka + Flink · WaterrAI</div>
+
+    <h1 class="reveal d2">
+      Voice-first AI tutoring,<br>
+      <span class="grad">designed for blind learners.</span>
+    </h1>
+    <p class="lede reveal d3">
+      Maverick is an audio-first tutor that adapts in real time. Every lesson
+      streams through Confluent Cloud — conversation outcomes hit Kafka,
+      a stream processor generates the next, more personal lesson while
+      you're still talking about the last one.
+    </p>
+
+    <div class="layout">
+      <section class="embed-card reveal d4" aria-labelledby="embed-h">
+        <div class="embed-bar">
+          <div class="who">
+            <span class="av" aria-hidden="true"></span>
+            <div><b id="embed-h">Preventive maintenance · Live scenario</b><small>Microphone + camera permissions may be requested.</small></div>
+          </div>
+        </div>
+        <iframe
+          class="embed-frame"
+          src="/harshit/preventive-maintenance-best-practices"
+          title="Preventive Maintenance Best Practices"
+          allow="camera; microphone; autoplay; display-capture; fullscreen; clipboard-read; clipboard-write"
+          allowfullscreen
+        ></iframe>
+      </section>
+
+      <aside class="card arch reveal d4" aria-labelledby="arch-h">
+        <h3 id="arch-h">How the loop works</h3>
+        <div class="step"><span class="n">1</span><div><b>Live tutor session</b><small>A WaterrAI video room with Aarya, your patient persona.</small></div></div>
+        <div class="step"><span class="n">2</span><div><b>Session → Kafka</b><small>Conversation outcomes land on topic <code>learning.events</code>.</small></div></div>
+        <div class="step"><span class="n">3</span><div><b>Stream processor</b><small>Derives the next lesson; writes to <code>learner.recommendations</code>.</small></div></div>
+        <div class="step"><span class="n">4</span><div><b>Adaptive follow-up</b><small>A new tailored session link arrives here — read aloud.</small></div></div>
+
+        <div class="stack" aria-label="Powered by">
+          <h4>Streaming · Confluent Cloud</h4>
+          <div class="row">
+            <span class="starred">Confluent Cloud</span>
+            <span>Apache Kafka</span>
+            <span>Apache Flink*</span>
+            <span>Schema Registry (Avro)</span>
+            <span>Kafka Connect</span>
+            <span>Tableflow (Iceberg)</span>
+          </div>
+
+          <h4>Live tutor</h4>
+          <div class="row">
+            <span class="starred">WaterrAI</span>
+            <span>Daily.co WebRTC</span>
+            <span>Gemini Live</span>
+            <span>Server-Sent Events</span>
+          </div>
+
+          <h4>App &amp; runtime</h4>
+          <div class="row">
+            <span>Node.js (ESM)</span>
+            <span>Express</span>
+            <span>KafkaJS</span>
+            <span>@kafkajs/confluent-schema-registry</span>
+            <span>node-fetch</span>
+            <span>dotenv</span>
+          </div>
+
+          <h4>Frontend &amp; hosting</h4>
+          <div class="row">
+            <span>HTML · CSS · Vanilla JS</span>
+            <span>Inter (rsms.me)</span>
+            <span>WAI-ARIA live regions</span>
+            <span class="starred">Vercel</span>
+          </div>
+        </div>
+        <p style="font-size:11.5px; color:var(--fg-3); margin:14px 0 0;">
+          *Flink SQL job is paste-ready (<code>flink/job.sql</code>); live demo uses a Node stream processor for schema-light topics.
+        </p>
+      </aside>
+    </div>
+  </main>
+
+  <footer>
+    <span>Built for Confluent AI Day 2026 India · Accessible by design</span>
+    <a href="https://waterr.ai/harshit/preventive-maintenance-best-practices" rel="noopener">Open scenario directly →</a>
+  </footer>
+</body>
+</html>

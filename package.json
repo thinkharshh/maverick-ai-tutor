@@ -1,0 +1,22 @@
+{
+  "name": "maverick-ai-tutor",
+  "version": "0.1.0",
+  "description": "Voice-first AI tutor for blind learners — WaterrAI + Confluent",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "setup": "node src/setup.js",
+    "start": "node src/server.js",
+    "recommender": "node src/recommender.js",
+    "register-schemas": "node --env-file=.env scripts/register-schemas.js",
+    "datagen": "node --env-file=.env scripts/datagen-cohort.js",
+    "smoke": "node src/setup.js && echo 'Setup OK. Now: npm start'"
+  },
+  "dependencies": {
+    "@kafkajs/confluent-schema-registry": "^3.3.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "kafkajs": "^2.2.4",
+    "node-fetch": "^3.3.2"
+  }
+}

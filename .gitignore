@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+.vercel/
+.claude/
+node_modules/
+*.log
+.DS_Store
+/tmp/
+dist/
+build/
+coverage/
+.idea/
+.vscode/
+*.swp
+*.swo

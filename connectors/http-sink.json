@@ -1,0 +1,19 @@
+{
+  "_comment_meta": "Confluent Cloud HTTP Sink Connector — replaces the Node deliverer's POST to /internal/push with a managed Connector pushing learner.recommendations records straight to server.js. Paste into Confluent Cloud → Connectors → + Add connector → 'HTTP Sink'. Replace <CLUSTER_API_KEY>, <CLUSTER_API_SECRET>, and <PUBLIC_URL> (ngrok or deployed server.js host).",
+  "name": "maverick-recommendation-http-sink",
+  "connector.class": "HttpSink",
+  "kafka.api.key": "<CLUSTER_API_KEY>",
+  "kafka.api.secret": "<CLUSTER_API_SECRET>",
+  "topics": "learner.recommendations",
+  "input.data.format": "JSON_SR",
+  "http.api.url": "<PUBLIC_URL>/internal/connector-push",
+  "request.method": "POST",
+  "headers": "Content-Type:application/json",
+  "auth.type": "NONE",
+  "max.retries": "5",
+  "retry.backoff.ms": "1000",
+  "behavior.on.error": "log",
+  "tasks.max": "1",
+  "_comment_endpoint": "server.js exposes /internal/connector-push which accepts the raw recommendation envelope and fans out via SSE — same as /internal/push but without the join_url enrichment (the connector forwards the recommendation; server.js can optionally create the Waterr meeting and push the join URL via SSE).",
+  "_comment_format": "JSON_SR matches what Flink writes when value.format='json-registry'. The HTTP Sink natively understands SR-encoded JSON and posts the decoded payload."
+}

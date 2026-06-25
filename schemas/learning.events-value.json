@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://maverick.ai/schemas/learning.events-value.json",
+  "title": "LearningEvent",
+  "description": "Emitted by server.js /webhook/waterr after every completed tutoring session. Partition key = learner.id.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "event_id", "occurred_at", "learner", "meeting", "performance"],
+  "properties": {
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "event_id":       { "type": "string", "minLength": 1 },
+    "occurred_at":    { "type": "string" },
+    "learner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id":              { "type": "string", "minLength": 1 },
+        "display_name":    { "type": "string" },
+        "contact_channel": { "type": "string" }
+      }
+    },
+    "meeting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "scenario_id", "subject"],
+      "properties": {
+        "id":               { "type": "string" },
+        "scenario_id":      { "type": "string" },
+        "subject":          { "type": "string" },
+        "duration_seconds": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "performance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["average_score"],
+      "properties": {
+        "average_score":    { "type": "integer", "minimum": 0, "maximum": 100 },
+        "filler_word_rate": { "type": "number",  "minimum": 0 },
+        "growth_areas":     { "type": "string" },
+        "strengths":        { "type": "string" },
+        "goal_results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["goal", "score"],
+            "properties": {
+              "goal":     { "type": "string" },
+              "score":    { "type": "integer", "minimum": 0, "maximum": 5 },
+              "feedback": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "raw_transcript_ref": { "type": "string" }
+  }
+}
