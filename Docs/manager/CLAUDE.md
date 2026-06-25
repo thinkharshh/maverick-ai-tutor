@@ -1,9 +1,11 @@
-# Maverick AI Tutor — Operator's Manual
+# Maverick — Preventive Maintenance Coach — Operator's Manual
 
 This file is the Claude Code entry point. Read this *first* in every new session.
 
 ## What this project is
-A voice-first AI tutor for blind learners, built for Confluent AI Day 2026 India. WaterrAI handles the live AI video session. Confluent Cloud (Kafka + Flink + Tableflow) closes a real-time adaptive learning loop: every session emits events → Flink generates the next personalized lesson → a new Waterr scenario is created → the link is delivered back to the learner.
+A voice-first AI coach for **shop-floor preventive-maintenance training** at a car manufacturing plant, built for Confluent AI Day 2026 India. WaterrAI handles the live AI video coaching session (Aarya — a senior PM coach). Confluent Cloud (Kafka + Flink + Tableflow) closes a real-time adaptive skilling loop: every session emits events → Flink generates the next personalized PM drill → a new Waterr scenario is created → the link is delivered back to the technician on the line.
+
+> **Field-name note:** the Kafka topics and JSON schemas keep the generic `learner.*` field names from the original platform. Read "learner" as "the technician training on this station". Kept generic so the same contract can be reused across plants and crew types without renaming topics or breaking the wire format.
 
 ## Always do this on startup (any agent, any session)
 1. `cat docs/status/CURRENT.md` — what state is the project in, what's blocked, what's next.
@@ -55,4 +57,4 @@ AI tutor/
 ```
 
 ## Definition of done for the demo
-Open `localhost:3000` → press "Start lesson" → AI tutor "Aarya" greets the learner over video → after the call, Confluent Cloud shows the event in `learning.events` and a row in `learner.recommendations` within ~30s → the page (via SSE) announces a new tailored lesson link.
+Open `localhost:3000` → press "Start drill" → AI coach "Aarya" greets the technician over video → after the call, Confluent Cloud shows the event in `learning.events` and a row in `learner.recommendations` within ~30s → the page (via SSE) announces a new tailored preventive-maintenance drill link.

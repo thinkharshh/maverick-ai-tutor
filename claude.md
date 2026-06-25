@@ -1,6 +1,6 @@
-# Maverick AI Tutor
+# Maverick — Preventive Maintenance Coach
 
-A voice-first AI tutor for blind learners. Built on **WaterrAI** (live AI video) + **Confluent Cloud** (Kafka + Flink + Tableflow) for Confluent AI Day 2026 India.  
+A voice-first AI coach for **shop-floor preventive-maintenance training** at a car manufacturing plant. Built on **WaterrAI** (live AI video coach) + **Confluent Cloud** (Kafka + Flink + Tableflow) for Confluent AI Day 2026 India.  
   
   
   

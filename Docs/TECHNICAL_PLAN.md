@@ -1,6 +1,8 @@
-# Technical Plan — Maverick AI Tutor
+# Technical Plan — Maverick · Preventive Maintenance Coach
 
-This is the code-level companion to [claude.md](claude.md). It defines the data model, services, topics, SQL, and the exact sequence to ship in 60 minutes.
+This is the code-level companion to [claude.md](claude.md). It defines the data model, services, topics, SQL, and the exact sequence to ship in 60 minutes for the shop-floor preventive-maintenance training use case at a car manufacturing plant.
+
+> **Field-name note:** topics and JSON envelopes keep generic names (`learning.events`, `learner.recommendations`, `learner.id`). Read "learner" as "the technician training on this station". Kept generic so the same Kafka contract serves multiple plant types without a rename.
 
 ---
 
@@ -30,48 +32,48 @@ Produced by the webhook bridge after every completed session.
   "event_id": "evt_01HXY...",
   "occurred_at": "2026-06-25T10:42:00Z",
   "learner": {
-    "id": "learner_anon_abc",
-    "display_name": "Asha",
+    "id": "tech_anon_abc",
+    "display_name": "Ravi (Press Shop A)",
     "contact_channel": "sms:+91XXXXXXXXXX"
   },
   "meeting": {
     "id": "meeting-uuid-from-waterr",
     "scenario_id": "scenario-uuid",
-    "subject": "math.fractions",
+    "subject": "press.hydraulic.daily-pm",
     "duration_seconds": 612
   },
   "performance": {
     "average_score": 64,
     "goal_results": [
-      { "goal": "concept_understood",       "score": 2, "feedback": "Confused about denominators." },
-      { "goal": "learner_confident",        "score": 3, "feedback": "" },
-      { "goal": "asked_clarifying_question","score": 4, "feedback": "" }
+      { "goal": "procedure_understood",      "score": 2, "feedback": "Missed two steps in the LOTO sequence on the hydraulic isolation valve." },
+      { "goal": "technician_confident",      "score": 3, "feedback": "" },
+      { "goal": "asked_clarifying_question", "score": 4, "feedback": "" }
     ],
     "filler_word_rate": 0.12,
-    "growth_areas": "Re-teach equivalent fractions with concrete examples; learner asked 'why' 4 times without resolution.",
-    "strengths": "Patient, willing to keep trying."
+    "growth_areas": "Re-teach LOTO sequence on hydraulic isolation valve with stepwise call-back; technician asked 'why' 4 times without resolution.",
+    "strengths": "Methodical, double-checks readings against the OEM service interval card."
   },
   "raw_transcript_ref": "waterr://meetings/{meeting_id}"
 }
 ```
 
-**Partition key:** `learner.id` — guarantees per-learner ordering in Flink state.
+**Partition key:** `learner.id` (technician id) — guarantees per-technician ordering in Flink state.
 
 ### 2.2 Kafka envelope — `LessonRecommendation`
 
-Emitted by the Flink job into `learner.recommendations`.
+Emitted by the Flink job into `learner.recommendations`. (Logically a `DrillRecommendation` for this use case; the type name is kept for wire compatibility.)
 
 ```json
 {
   "schema_version": 1,
   "event_id": "rec_01HXY...",
   "occurred_at": "2026-06-25T10:43:10Z",
-  "learner_id": "learner_anon_abc",
+  "learner_id": "tech_anon_abc",
   "contact_channel": "sms:+91XXXXXXXXXX",
   "recommendation": {
-    "subject": "math.fractions",
+    "subject": "press.hydraulic.daily-pm",
     "difficulty": "easier",
-    "next_scenario_prompt": "You are Aarya, a patient blind-friendly tutor. The learner Asha struggles with denominators. Reteach equivalent fractions using only *audible* analogies — slicing chapatis, splitting groups of marbles by sound. Avoid any 'see this' / 'look at' phrasing. End by asking her to explain it back in her own words.",
+    "next_scenario_prompt": "You are Aarya, a senior preventive-maintenance coach. The technician Ravi missed two steps in the LOTO sequence on the hydraulic isolation valve. Re-teach the daily-PM walk-around for an 800-ton hydraulic press starting from energy isolation. Cite OEM service interval (daily, pre-shift) and IATF 16949 clause 7.1.5.2 on monitoring equipment. End by asking him to walk back his first three moves in his own words.",
     "estimated_duration_min": 12
   }
 }
@@ -91,22 +93,22 @@ const voice  = voices.find(v => v.provider === 'elevenlabs' && /sarah|rachel|bel
 // 2. create the persona
 const persona = await wf('POST', '/personas', {
   name: 'Aarya',
-  job_title: 'Patient Audio-First Tutor',
-  demeanor: 'empathetic',
-  background: 'A patient tutor specialized in teaching visually impaired learners. Never uses visual language. Repeats concepts as many times as needed. Asks the learner to explain back in their own words.',
+  job_title: 'Senior Preventive Maintenance Coach',
+  demeanor: 'methodical, safety-first, patient',
+  background: 'A senior preventive-maintenance coach who has trained shop-floor technicians at car manufacturing plants for 15 years. Speaks SOP-grade plant language. Cites OEM service intervals (daily / shift / weekly / monthly / yearly) and IATF 16949 clauses where applicable. Uses station-grounded analogies (a press die\'s heartbeat, the hum of a healthy servo). Asks the technician to walk procedures back in their own words. Never bypasses LOTO, never advises running a station with a known fault code.',
   gender: 'female',
   voice_id: voice.id
 });
 
-// 3. create the tutor scenario (goals can be inlined; see prompting guide)
+// 3. create the coach scenario (goals can be inlined; see prompting guide)
 const scenario = await wf('POST', '/scenarios', {
-  name: 'Maverick: Audio-First Tutor',
+  name: 'Maverick: Preventive Maintenance Coach',
   type: 'upskill',
   persona_id: persona.data.id,
   call_duration: 15,
   visibility: 'public',
-  welcome_message: "Hello, I'm Aarya. Tell me what you'd like to learn today — I'm all ears.",
-  prompt: TUTOR_PROMPT,   // see §3.2
+  welcome_message: "Hello, I'm Aarya. Tell me which station you're drilling today and the procedure you want to walk — I'll meet you on the line.",
+  prompt: COACH_PROMPT,   // see §3.2
   goals: [/* optional precreated goal UUIDs */]
 });
 
@@ -118,46 +120,58 @@ await wf('PUT', `/scenarios/${scenario.data.id}/session-options`, {
 console.log('SCENARIO_ID=' + scenario.data.id);  // copy to .env
 ```
 
-### 3.2 The tutor prompt (`TUTOR_PROMPT`)
+### 3.2 The coach prompt (`COACH_PROMPT`)
 
 ```text
-You are Aarya, a warm and infinitely patient AI tutor designed for blind and
-low-vision learners. Teach the subject the learner names at the start.
+You are Aarya, a methodical and infinitely patient senior preventive-maintenance
+coach for shop-floor technicians at a car manufacturing plant. Walk the
+technician through the PM procedure on the station they name at the start
+(e.g. robotic spot-welder, hydraulic press, paint booth, conveyor lubrication,
+EV battery line, powertrain test bench, QC gauge calibration).
 
 ## Hard rules
-- Audio-only language. NEVER say "see", "look at", "watch", "as you can see",
-  "in the diagram", "on the screen". Substitute with "imagine", "picture in
-  your mind", "feel like", "sounds like".
-- Use sound-based analogies: clapping rhythms, splitting groups, slicing a
-  chapati, ringing bells, footsteps.
-- Repeat any explanation that follows a "I don't get it" / "again" / "wait" /
-  silence > 6 seconds. Never sigh, never rush.
-- Ask the learner to explain it back ("Can you tell me in your own words?")
-  before moving on. This is your truth test.
-- When confidence is low, slow the pace and shrink the scope.
+- SOP-grade plant language. Use "LOTO" (lockout-tagout), "torque-to-spec",
+  "OEM service interval", "vibration signature", "thermal imaging", "MTBF",
+  "MTTR", "fault code", "shift handover".
+- Cite the relevant PM interval (daily / shift / weekly / monthly / yearly)
+  and the reference document (OEM manual section / IATF 16949 clause / ISO 9001
+  clause) whenever a step has one.
+- Use station-grounded analogies: a press die's heartbeat, the hum of a healthy
+  servo, the rhythm of a balanced robot arm, the smell of a properly cured
+  paint booth.
+- Repeat any explanation that follows "I don't get it" / "again" / "wait" /
+  silence > 6 seconds. Never sigh, never rush — technicians are often on the
+  line under shift-time pressure.
+- Ask the technician to walk the procedure back ("Can you walk me through your
+  first move in your own words?") before moving on. This is your truth test.
+- When confidence is low, slow the pace and shrink the scope to one sub-system.
+- Safety first: never bypass LOTO, never advise running a station with a known
+  fault code, never skip the try-step. If a question implies an unsafe
+  shortcut, redirect to the safe SOP.
 
 ## Flow
-1. Greet by name (provided in note_context). Ask what they'd like to learn.
-2. Teach one concept at a time. Use 2-3 audible analogies per concept.
-3. After each concept, ask them to explain it back.
-4. End with one small celebration ("That was excellent. You explained X back
-   to me without help.").
+1. Greet by name (provided in note_context). Ask which station and which
+   failure mode / procedure they want to drill today.
+2. Walk one PM step at a time. Use 2-3 station-grounded analogies per step.
+3. After each step, ask them to walk it back.
+4. End with one small celebration ("Solid. You walked back the bearing
+   inspection without a prompt.").
 
-## Goals (for post-call scoring)
-- concept_understood: Did the learner explain the concept back accurately?
-- learner_confident: Tone, hesitations, willingness to attempt.
-- asked_clarifying_question: A sign of engagement.
+## Goals (for post-shift scoring)
+- procedure_understood: Did the technician walk back the PM procedure accurately?
+- technician_confident: Tone, hesitations, willingness to attempt.
+- asked_clarifying_question: A sign of engagement — flags rising competence.
 ```
 
 ### 3.3 `/start` route (create-meeting)
 
 ```js
 app.post('/start', express.json(), async (req, res) => {
-  const { learner_name = 'Friend', subject = 'math.fractions', contact = '' } = req.body;
+  const { learner_name = 'Friend', subject = 'press.hydraulic.daily-pm', contact = '' } = req.body;
   const meeting = await wf('POST', '/meetings', {
     person_name: learner_name,
     scenario_id: process.env.SCENARIO_ID,
-    note_context: `Learner name: ${learner_name}. Subject requested: ${subject}. Contact for follow-up: ${contact}.`
+    note_context: `Technician name: ${learner_name}. Station / procedure requested: ${subject}. Contact for follow-up: ${contact}.`
   });
   res.json({
     meeting_id: meeting.data.id,
@@ -212,10 +226,10 @@ app.post('/webhook/waterr',
 
 | Topic | Cleanup | Key | Notes |
 |---|---|---|---|
-| `learning.events` | delete, 7d | `learner_id` | All session outcomes. |
-| `learner.recommendations` | delete, 7d | `learner_id` | Output of Flink. Consumed by `recommender.js`. |
+| `learning.events` | delete, 7d | `learner_id` (technician id) | All PM session / drill outcomes. |
+| `learner.recommendations` | delete, 7d | `learner_id` (technician id) | Output of Flink. Consumed by `recommender.js`. |
 
-Both topics: **Tableflow → ON** (Iceberg). Zero extra code; we get history for free.
+Both topics: **Tableflow → ON** (Iceberg). Zero extra code; we get the IATF / ISO audit trail for free.
 
 ### 4.2 Flink SQL job
 
@@ -282,12 +296,14 @@ SELECT
     ML_PREDICT(
       'next_lesson_model',
       CONCAT(
-        'You are designing the next 12-minute lesson for a blind learner. ',
-        'Subject: ', meeting.subject, '. ',
+        'You are designing the next 12-minute preventive-maintenance drill for a ',
+        'shop-floor technician at a car manufacturing plant. ',
+        'Station / subject: ', meeting.subject, '. ',
         'Previous score: ', CAST(performance.average_score AS STRING), '/100. ',
-        'Growth areas: ', performance.growth_areas, '. ',
-        'Output ONLY the new tutor system prompt — strict audio-only language, ',
-        'sound-based analogies, ask learner to explain back. No preamble.'
+        'Skill gaps observed last session: ', performance.growth_areas, '. ',
+        'Output ONLY the new coach system prompt — SOP-grade language, station-grounded ',
+        'analogies, cite the relevant PM interval and OEM / IATF reference where applicable, ',
+        'ask the technician to walk the procedure back. No preamble.'
       )
     ),
     12
@@ -298,7 +314,7 @@ WHERE performance.average_score IS NOT NULL;
 
 ### 4.3 Tableflow
 
-In each topic's settings → **Enable Tableflow**. Iceberg tables appear automatically. Mention this in the pitch as the "audit trail for parents and schools" — zero extra code.
+In each topic's settings → **Enable Tableflow**. Iceberg tables appear automatically. Mention this in the pitch as the "audit trail for plant supervisors, quality, and IATF 16949 / ISO 9001 auditors" — zero extra code.
 
 ---
 
@@ -329,7 +345,7 @@ await consumer.run({
     const meeting = await wf('POST', '/meetings', {
       person_name: rec.learner_id,
       scenario_id: scenario.data.id,
-      note_context: `Adaptive follow-up. Subject: ${rec.recommendation.subject}. Difficulty: ${rec.recommendation.difficulty}.`
+      note_context: `Adaptive PM drill follow-up. Station / procedure: ${rec.recommendation.subject}. Difficulty: ${rec.recommendation.difficulty}.`
     });
 
     // 3. push the link back (SMS via Twilio, or our SSE channel)
@@ -340,26 +356,26 @@ await consumer.run({
 
 ---
 
-## 6. Accessible landing page (`public/index.html`)
+## 6. Workstation-kiosk landing page (`public/index.html`)
 
 ```html
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Maverick — Audio Tutor</title>
+  <title>Maverick — Preventive Maintenance Coach</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
   <main>
-    <h1>Maverick — Your Patient Audio Tutor</h1>
-    <p>Press the button below to start a tutoring session. A friendly tutor named Aarya will greet you.</p>
+    <h1>Maverick — Preventive Maintenance Coach</h1>
+    <p>Press the button below to start a preventive-maintenance drill. A senior coach named Aarya will greet you on the line.</p>
     <form id="f" aria-describedby="hint">
       <label for="name">Your name</label>
       <input id="name" name="learner_name" autocomplete="given-name" required>
-      <label for="subj">What would you like to learn?</label>
-      <input id="subj" name="subject" value="math: fractions" required>
-      <button type="submit" id="go">Start lesson</button>
+      <label for="subj">Which station / procedure are you drilling today?</label>
+      <input id="subj" name="subject" value="press.hydraulic.daily-pm" required>
+      <button type="submit" id="go">Start drill</button>
     </form>
     <div id="status" role="status" aria-live="polite" aria-atomic="true"></div>
   </main>
@@ -370,7 +386,7 @@ await consumer.run({
       s.textContent = 'Connecting Aarya — one moment.';
       const body = Object.fromEntries(new FormData(f));
       const r = await fetch('/start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) }).then(r=>r.json());
-      s.textContent = 'Connected. Opening the lesson room now.';
+      s.textContent = 'Connected. Opening the drill room now.';
       window.location = r.join_url;
     });
   </script>
@@ -378,12 +394,12 @@ await consumer.run({
 </html>
 ```
 
-Key accessibility details:
+Key shop-floor UX details:
 - One `<main>` landmark, one `<h1>`.
-- `<label for>` on every input — screen readers announce them.
+- `<label for>` on every input — every kiosk / tablet announces them through the headset.
 - `aria-live="polite"` status region: every state change is read aloud automatically.
-- No ARIA-required JS focus traps; native form submit handles it.
-- Big native button — works with VoiceOver, NVDA, JAWS, TalkBack.
+- No ARIA-required JS focus traps; native form submit handles it (good for single-button line-side actuators).
+- Big native button — usable with gloved hands.
 
 ---
 
@@ -414,14 +430,14 @@ node recommender.js
 
 ## 8. Demo script (3 minutes — what we say + what the judges see)
 
-| 00:00 | Open `https://<ngrok>` on the laptop — **dim the screen to zero**. Use macOS VoiceOver to navigate. Screen reader reads "Maverick — Your Patient Audio Tutor. Your name, edit text". |
-| 00:20 | Type "Asha", subject "fractions", press Enter. Status region announces "Connected. Opening the lesson room now." |
-| 00:30 | Aarya greets in a warm voice. Asha (you) intentionally says "I don't get denominators". Aarya re-teaches with audible analogies. End the call after ~90s. |
-| 02:00 | Switch to Confluent Cloud → Flink → show the `learning.events` topic receiving the event live → show `learner.recommendations` getting a row 5-10s later (the `next_scenario_prompt` is the AI-generated next lesson). |
-| 02:30 | Phone buzzes (Twilio SMS) with a new meeting link tailored to denominators. Click it — Aarya immediately starts re-teaching with a *new* angle. |
-| 02:55 | Show the Iceberg table via Tableflow — "this is the audit trail for parents and teachers." |
+| 00:00 | Open `https://<ngrok>` on the workstation kiosk — headset on, hands behind your back (gloves on). Page narrates "Maverick — Preventive Maintenance Coach. Your name, edit text." |
+| 00:20 | Enter "Ravi", station "press.hydraulic.daily-pm", press Enter. Status region announces "Connected. Opening the drill room now." |
+| 00:30 | Aarya greets in a clear coaching voice. Ravi (you) intentionally says "I always trip on the LOTO sequence on the isolation valve". Aarya re-teaches the LOTO sequence step by step, citing OEM daily PM interval. End the call after ~90s. |
+| 02:00 | Switch to Confluent Cloud → Flink → show the `learning.events` topic receiving the event live → show `learner.recommendations` getting a row 5-10s later (the `next_scenario_prompt` is the AI-generated next drill). |
+| 02:30 | Phone buzzes (Twilio SMS) with a new meeting link tailored to the LOTO sequence. Click it — Aarya immediately starts re-teaching with a *new* approach (step-by-step call-and-response). |
+| 02:55 | Show the Iceberg table via Tableflow — "this is the audit trail for plant supervisors, quality, and IATF auditors." |
 
-End: "The learner never saw a screen. The Confluent stream made the lesson adapt in seconds, not days."
+End: "The technician's hands stayed on the tools. The Confluent stream made the next drill adapt in seconds, not after the next monthly training cycle."
 
 ---
 

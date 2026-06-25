@@ -1,7 +1,7 @@
-# ROADMAP — Maverick AI Tutor
+# ROADMAP — Maverick · Preventive Maintenance Coach
 
 ## North star
-Voice-first AI tutor for blind learners. Live Waterr video session + Confluent Kafka/Flink learning loop. Demo must be runnable with the screen off — judges hear it work.
+Voice-first AI coach for shop-floor preventive-maintenance training at a car manufacturing plant. Live Waterr video session + Confluent Kafka/Flink adaptive-drill loop. Demo must be runnable hands-busy (gloves on, headset on) — judges hear and see the loop work end to end on a workstation kiosk.
 
 ## Milestones (in order)
 
@@ -12,10 +12,10 @@ Voice-first AI tutor for blind learners. Live Waterr video session + Confluent K
 - `package.json` with deps installed
 - Empty stubs for `src/setup.js`, `src/server.js`, `src/kafka.js`, `src/recommender.js`, `flink/job.sql`, `public/index.html`
 
-### M1 — Waterr-only demo · DOD: opening localhost:3000 → submit form → Aarya talks to you
-- `src/setup.js` runs idempotently; creates Aarya persona + tutor scenario
+### M1 — Waterr-only demo · DOD: opening localhost:3000 → submit form → Aarya (PM coach) talks to you
+- `src/setup.js` runs idempotently; creates Aarya persona + preventive-maintenance coach scenario
 - `src/server.js` serves landing page + `/start` route creates a live meeting
-- `public/index.html` is screen-reader-friendly
+- `public/index.html` is workstation-kiosk-friendly (one main, one h1, labelled inputs, aria-live status)
 - Smoke test passes (you can join a real Waterr room)
 
 ### M2 — Kafka bridge · DOD: every completed Waterr session lands in Confluent `learning.events`
@@ -27,37 +27,37 @@ Voice-first AI tutor for blind learners. Live Waterr video session + Confluent K
 
 ### M3 — Flink adaptive recommendation · DOD: `learner.recommendations` gets a new row within ~10s of an event landing
 - Flink SQL job pasted into Confluent Cloud and running
-- AI model `next_lesson_model` registered (Anthropic Claude)
-- `recommendation.next_scenario_prompt` is sensible English on a real test event
+- AI model `next_lesson_model` registered (Anthropic Claude or Gemini via Vertex)
+- `recommendation.next_scenario_prompt` is sensible PM coaching English on a real test event (cites OEM interval / IATF clause where applicable)
 
-### M4 — Closed loop · DOD: SMS or SSE delivers a new join link to the learner ≤30s after the previous call ends
+### M4 — Closed loop · DOD: SMS or SSE delivers a new drill link to the technician ≤30s after the previous call ends
 - `src/recommender.js` consumes recommendations
 - Calls `/scenarios/create-with-gpt` then `/meetings`
 - Pushes link to `server.js` internal endpoint → SSE → page announces it via `aria-live`
-- Manual smoke: end the first call, count the seconds, click the new link
+- Manual smoke: end the first drill, count the seconds, click the new drill link
 
-### M5 — Demo polish · DOD: 3-minute screen-off demo, no fumbling
+### M5 — Demo polish · DOD: 3-minute hands-busy kiosk demo, no fumbling
 - Tableflow ON (Iceberg tables visible in Confluent UI)
-- macOS VoiceOver tested on `index.html`
+- Workstation-kiosk run-through tested on `index.html` (one-button submit, headset audio)
 - Demo script in `docs/roadmap/DEMO.md`
 - Backup video recorded (Loom or QuickTime) in case live demo Wi-Fi fails
 
 ## Features beyond demo (post-hackathon)
-- Multi-modal vision assist (camera describes objects to learner)
-- Curriculum-driven scenarios (one persona, many subjects, parent-set learning plan)
-- Hindi voice + multi-language fall-through
-- Parent/teacher dashboard reading from the Iceberg tables
-- Offline-friendly mobile shortcut (PWA add-to-home)
-- Open dataset of anonymized learning events (consent-gated)
+- Multi-modal vision assist (technician's helmet-cam describes the part Aarya is referring to)
+- Curriculum-driven scenarios (one persona, many stations, plant-trainer-set certification plan)
+- Hindi / Tamil / Marathi voice + multi-language fall-through for line operators
+- Plant-supervisor + quality dashboard reading from the Iceberg tables (IATF 16949 audit-ready)
+- Offline-friendly mobile shortcut (PWA add-to-home for line tablets)
+- Anonymized PM-event dataset for predictive-maintenance R&D (consent-gated)
 
 ## Cut order — if we are short on time, drop right-to-left
-**Tableflow → SMS delivery → Flink `ML_PREDICT` (move to Node) → Adaptive next-lesson (hardcode follow-up)**
+**Tableflow → SMS delivery → Flink `ML_PREDICT` (move to Node) → Adaptive next-drill (hardcode follow-up)**
 
-The leftmost cut survives → still a working voice tutor. Rightmost is gloss.
+The leftmost cut survives → still a working PM voice coach. Rightmost is gloss.
 
 ## Definition of "winning the hackathon"
 - Live working demo (no slides)
 - Confluent Cloud UI shown end-to-end (topics + Flink + Tableflow)
-- Screen-off accessibility moment ("the entire flow works without sight")
-- Clear social impact framing
+- Hands-busy industrial moment ("the entire flow works while the technician's hands stay on the tools")
+- Clear industrial-impact framing (skilling cycles measured in seconds, not monthly training quarters)
 - Production-shaped architecture (Kafka contracts, Flink SQL, not just LLM glue)

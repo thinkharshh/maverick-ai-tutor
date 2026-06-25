@@ -1,6 +1,6 @@
-# Maverick — AI Tutor
+# Maverick — Preventive Maintenance Coach
 
-A voice-first AI tutor for blind and low-vision learners. Built on **WaterrAI** (live AI video tutor) + **Confluent Cloud** (Kafka + Flink + Schema Registry + Tableflow). The Confluent stream turns each completed lesson into an AI-crafted, harder/easier follow-up lesson — adaptive learning that updates in seconds, not days.
+A voice-first AI coach for **shop-floor preventive-maintenance training** at a car manufacturing plant. Built on **WaterrAI** (live AI video coach) + **Confluent Cloud** (Kafka + Flink + Schema Registry + Tableflow). The Confluent stream turns each completed PM training session into an AI-crafted, harder/easier follow-up drill — adaptive skilling that updates in seconds, not after the next monthly training cycle.
 
 Originally built for **Confluent AI Day 2026 India**.
 
@@ -8,7 +8,7 @@ Originally built for **Confluent AI Day 2026 India**.
 
 **<https://maverick-ai-tutor.vercel.app>**
 
-Open it, click in. The lesson runs inside the page — voice-first, screen-reader friendly. No login.
+Open it, click in. The drill runs inside the page — voice-first, kiosk- and headset-friendly. No login.
 
 ## Rubric scorecard (all live)
 
@@ -23,11 +23,11 @@ Open it, click in. The lesson runs inside the page — voice-first, screen-reade
 | HTTP Sink Connector (bonus) | 🟡 awaits ngrok URL |
 | Voice-first demo (Waterr) | ✅ live at the URL above |
 
-Sample Gemini-generated next-lesson prompt from the live `learner.recommendations` topic:
+Sample Gemini-generated next-drill prompt from the live `learner.recommendations` topic:
 
-> **learner_046 (social.geography, score 79):** *"Hello there! It's Aarya, your guide for social geography. Great to have you back. I remember your last score of 79 was really solid! Today, we're going to tackle something that tripped us up a little last time — our cardinal directions. We'll make it super clear with some fun sound challenges..."*
+> **tech_046 (press.hydraulic.daily-pm, score 79):** *"Welcome back, Ravi — Aarya here. A 79 on the daily walk-around is solid. Today let's tighten up the LOTO sequence on the hydraulic isolation valve — the one step that tripped you up. We'll go shift-start order: lockout, tag, try, then bleed pressure. Cite OEM service interval for an 800-ton press and IATF 16949 clause 7.1.5.2 as we go..."*
 
-Each one personalized by Gemini per learner per session, generated inside the Flink SQL job.
+Each one personalized by Gemini per technician per session, generated inside the Flink SQL job.
 
 ---
 
@@ -43,7 +43,7 @@ Each one personalized by Gemini per learner per session, generated inside the Fl
 8. [Environment variables](#8-environment-variables)
 9. [Local run order](#9-local-run-order)
 10. [Vercel deployment](#10-vercel-deployment)
-11. [Accessibility design](#11-accessibility-design)
+11. [Shop-floor UX design](#11-shop-floor-ux-design)
 12. [Security notes](#12-security-notes)
 13. [Demo script](#13-demo-script)
 14. [Cut-list / risks](#14-cut-list--risks)
@@ -52,17 +52,19 @@ Each one personalized by Gemini per learner per session, generated inside the Fl
 
 ## 1. What it does
 
-A blind learner opens [public/index.html](public/index.html) — a screen-reader-first page with one form. They type a name and a subject, press **Start lesson**, and an `aria-live` region announces "Connecting Aarya — one moment." A live AI tutor (Aarya, an ElevenLabs voice driven by WaterrAI) joins via an embedded iframe and teaches the requested topic using only audio-friendly language.
+A technician on the assembly line opens [public/index.html](public/index.html) — a workstation-kiosk page with one form. They enter their name and the station they're studying today (e.g. *robotic spot-welder*, *hydraulic press*, *paint booth*, *EV battery line*), press **Start drill**, and an `aria-live` region announces "Connecting Aarya — one moment." A live AI coach (Aarya, an ElevenLabs voice driven by WaterrAI) joins via an embedded iframe and walks the technician through that station's preventive-maintenance procedure using SOP-grade language.
 
 When the session ends:
 
-1. WaterrAI fires `session.analysis_complete` to our webhook with goal scores, growth areas, transcript ref.
+1. WaterrAI fires `session.analysis_complete` to our webhook with goal scores, skill gaps, transcript ref.
 2. The webhook validates HMAC, normalises the payload into a `LearningEvent`, and produces it to the Kafka topic `learning.events`.
-3. A Flink SQL job consumes that topic, calls Claude via `ML_PREDICT()` to draft the **next** lesson prompt tailored to the learner's growth areas, and writes a `LessonRecommendation` to `learner.recommendations`.
-4. A Node consumer (`recommender.js`) picks up the recommendation, asks Waterr to create a fresh scenario from the AI-generated prompt, spins up a new meeting, and pushes the join URL back to the learner via Server-Sent Events (the page reads it aloud via `aria-live`).
-5. Both topics have **Tableflow** enabled, so every event is materialised as an Iceberg table for parents/teachers/auditors — zero extra code.
+3. A Flink SQL job consumes that topic, calls Claude via `ML_PREDICT()` to draft the **next** drill prompt tailored to the technician's skill gaps, and writes a `LessonRecommendation` to `learner.recommendations`.
+4. A Node consumer (`recommender.js`) picks up the recommendation, asks Waterr to create a fresh scenario from the AI-generated prompt, spins up a new meeting, and pushes the join URL back to the technician via Server-Sent Events (the page reads it aloud via `aria-live`).
+5. Both topics have **Tableflow** enabled, so every event is materialised as an Iceberg table for plant supervisors, quality, and IATF 16949 / ISO 9001 auditors — zero extra code.
 
-The learner never has to see a screen.
+The technician's hands stay on the tools.
+
+> **Naming note:** the schemas and topics use the generic `learner.*` field names (kept as-is from the original platform). Read "learner" as "the technician training on this station". Kept generic so the same contract can be reused across plants and crew types without a rename.
 
 ---
 
@@ -70,8 +72,8 @@ The learner never has to see a screen.
 
 ```
                 +----------------+        WebRTC          +-----------+
-   Learner ---->|  index.html    | <--------------------> |  WaterrAI |
-   (browser)    |  (a11y page)   |   (Aarya, live voice)  |  scenario |
+   Technician ->|  index.html    | <--------------------> |  WaterrAI |
+   (kiosk)      |  (PM coach)    |   (Aarya, live voice)  |  scenario |
                 +-------+--------+                        +-----+-----+
                         | POST /start                           | session.analysis_complete
                         v                                       v
@@ -109,8 +111,8 @@ The learner never has to see a screen.
                         +<--------------------------------------+
                         |
                         v
-                   Learner's page announces:
-                   "A new lesson is ready — opening now."
+                   Technician's page announces:
+                   "A new drill is ready — opening now."
 ```
 
 ---
@@ -127,7 +129,7 @@ AI tutor/
 ├── api/
 │   └── index.js                    Vercel serverless wrapper around src/server.js
 ├── public/
-│   └── index.html                  screen-reader-first landing page
+│   └── index.html                  shop-floor-friendly landing page
 ├── src/
 │   ├── setup.js                    idempotent bootstrap: persona + scenario in Waterr
 │   ├── server.js                   Express: /, /start, /webhook/waterr, /events, /internal/push,
@@ -161,7 +163,7 @@ Two Kafka topics carry the whole conversation between Waterr and Confluent.
 
 ### 4.1 `learning.events` — source topic
 
-Produced by `server.js` after every completed session. **Partition key:** `learner.id` (guarantees per-learner ordering in Flink state).
+Produced by `server.js` after every completed session. **Partition key:** `learner.id` (guarantees per-technician ordering in Flink state).
 
 ```json
 {
@@ -169,26 +171,26 @@ Produced by `server.js` after every completed session. **Partition key:** `learn
   "event_id": "evt_01HXY...",
   "occurred_at": "2026-06-25T10:42:00Z",
   "learner": {
-    "id": "learner_anon_abc",
-    "display_name": "Asha",
+    "id": "tech_anon_abc",
+    "display_name": "Ravi (Press Shop A)",
     "contact_channel": "sms:+91XXXXXXXXXX"
   },
   "meeting": {
     "id": "meeting-uuid-from-waterr",
     "scenario_id": "scenario-uuid",
-    "subject": "math.fractions",
+    "subject": "press.hydraulic.daily-pm",
     "duration_seconds": 612
   },
   "performance": {
     "average_score": 64,
     "goal_results": [
-      { "goal": "concept_understood",        "score": 2, "feedback": "Confused about denominators." },
-      { "goal": "learner_confident",         "score": 3, "feedback": "" },
+      { "goal": "procedure_understood",      "score": 2, "feedback": "Missed two steps in the LOTO sequence on the hydraulic isolation valve." },
+      { "goal": "technician_confident",      "score": 3, "feedback": "" },
       { "goal": "asked_clarifying_question", "score": 4, "feedback": "" }
     ],
     "filler_word_rate": 0.12,
-    "growth_areas": "Re-teach equivalent fractions with concrete examples.",
-    "strengths": "Patient, willing to keep trying."
+    "growth_areas": "Re-teach LOTO sequence on hydraulic isolation valve with stepwise call-back.",
+    "strengths": "Methodical, double-checks readings against the OEM service interval card."
   },
   "raw_transcript_ref": "waterr://meetings/{meeting_id}"
 }
@@ -205,12 +207,12 @@ Emitted by the Flink job. **Partition key:** `learner_id`.
   "schema_version": 1,
   "event_id": "rec_01HXY...",
   "occurred_at": "2026-06-25T10:43:10Z",
-  "learner_id": "learner_anon_abc",
+  "learner_id": "tech_anon_abc",
   "contact_channel": "sms:+91XXXXXXXXXX",
   "recommendation": {
-    "subject": "math.fractions",
+    "subject": "press.hydraulic.daily-pm",
     "difficulty": "easier",
-    "next_scenario_prompt": "You are Aarya, a patient blind-friendly tutor. The learner Asha struggles with denominators. Re-teach equivalent fractions using only *audible* analogies — slicing chapatis, splitting groups of marbles by sound. Avoid any 'see this' / 'look at' phrasing. End by asking her to explain it back in her own words.",
+    "next_scenario_prompt": "You are Aarya, a senior preventive-maintenance coach. The technician Ravi missed two steps in the LOTO sequence on the hydraulic isolation valve. Re-teach the daily-PM walk-around for an 800-ton hydraulic press starting from energy isolation. Cite OEM service interval (daily, pre-shift) and IATF 16949 clause 7.1.5.2 on monitoring equipment. End by asking him to walk back his first three moves in his own words.",
     "estimated_duration_min": 12
   }
 }
@@ -228,9 +230,9 @@ Both schemas are registered in Confluent Schema Registry under the standard `<to
 
 Idempotently provisions WaterrAI:
 
-1. `GET /voices/all` — picks a calm female ElevenLabs voice (prefers Bella / Janvi / Ayesha).
+1. `GET /voices/all` — picks a clear, calm ElevenLabs voice (prefers Bella / Janvi / Ayesha).
 2. `POST /personas` — creates "Aarya" (skipped if it already exists by name).
-3. `POST /scenarios` — creates "Maverick: Audio-First Tutor" with `TUTOR_PROMPT` (audio-only language, sound-based analogies, ask-back-in-own-words, never sigh/rush). Skipped if it already exists by name.
+3. `POST /scenarios` — creates "Maverick: Preventive Maintenance Coach" with the coach prompt (SOP-grade plant language, station-grounded analogies, walk-back-in-own-words, safety-first / LOTO-aware). Skipped if it already exists by name.
 
 Prints two lines to stdout for the operator to paste into `.env`:
 
@@ -239,7 +241,7 @@ PERSONA_ID=<uuid>
 SCENARIO_ID=<uuid>
 ```
 
-The current `.env` points at a manually created "Accessible Finance Guide" scenario. Re-running setup would create a different scenario by name — that's why [.env](.env#L20) carries a "do NOT re-run" warning.
+The current `.env` points at a manually created "Preventive Maintenance Best Practices" scenario. Re-running setup would create a different scenario by name — that's why [.env](.env#L20) carries a "do NOT re-run" warning.
 
 ### 5.2 `src/server.js` — Express app
 
@@ -248,11 +250,11 @@ The current `.env` points at a manually created "Accessible Finance Guide" scena
 | `/` | GET | Serves [public/index.html](public/index.html) with `Cache-Control: no-store`. |
 | `/start` | POST | Returns `embed_url` / `join_url` pointing at our reverse-proxied scenario embed. |
 | `/webhook/waterr` | POST | Raw-body HMAC verify (`x-waterr-signature: sha256=...`), shapes payload into `LearningEvent`, produces to Kafka. |
-| `/events?learner_id=` | GET | Server-Sent Events channel for per-learner push notifications (`recommendation`, `recommendation_preview`, `ping`). |
-| `/internal/push` | POST | Recommender posts `{ learner_id, join_url }`; fanned out to that learner's SSE listener. |
+| `/events?learner_id=` | GET | Server-Sent Events channel for per-technician push notifications (`recommendation`, `recommendation_preview`, `ping`). |
+| `/internal/push` | POST | Recommender posts `{ learner_id, join_url }`; fanned out to that technician's SSE listener. |
 | `/internal/connector-push` | POST | Landing pad for the Confluent HTTP Sink Connector (batched recommendations from Kafka → SSE). |
 | `/embed/inline/:id` | GET | Reverse-proxies `https://waterr.ai/embed/inline/<id>`, strips `X-Frame-Options` / CSP, rewrites absolute Waterr URLs to relative so the embedded SPA thinks it's same-origin. |
-| `*` (catch-all) | ANY | Forwards anything not in the local route list to `waterr.ai`, with a defensive rewrite for the SPA's pathname-derived `/backend/scenarios/public/user/...` URLs, and an injection of a synthetic learner identity into empty `POST /backend/auth/end-user` bodies so JWT mint succeeds. |
+| `*` (catch-all) | ANY | Forwards anything not in the local route list to `waterr.ai`, with a defensive rewrite for the SPA's pathname-derived `/backend/scenarios/public/user/...` URLs, and an injection of a synthetic technician identity into empty `POST /backend/auth/end-user` bodies so JWT mint succeeds. |
 | `/healthz` | GET | `{ ok: true, scenario_id }` for uptime checks. |
 
 The catch-all proxy is the key trick that makes the embed work reliably: by serving WaterrAI's SPA from our own origin, we bypass third-party iframe blockers, X-Frame-Options, CSP, and cross-origin auth quirks in one stroke.
@@ -332,12 +334,12 @@ After save, `next_lesson_model` is callable inside Flink SQL via `ML_PREDICT('ne
 
 | Connector | Config | Purpose |
 |-----------|--------|---------|
-| Datagen Source | [connectors/datagen-source.json](connectors/datagen-source.json) | Pumps synthetic `learning.events` for cohort-scale demo. |
+| Datagen Source | [connectors/datagen-source.json](connectors/datagen-source.json) | Pumps synthetic `learning.events` for cohort/shift-scale demo. |
 | HTTP Sink | [connectors/http-sink.json](connectors/http-sink.json) | Pushes `learner.recommendations` to `POST /internal/connector-push` for a no-Node-consumer path. |
 
 ### 6.5 Tableflow
 
-For each topic, **Settings → Enable Tableflow**. Iceberg tables appear automatically. Pitch line: *"the audit trail for parents and schools — zero extra code."*
+For each topic, **Settings → Enable Tableflow**. Iceberg tables appear automatically. Pitch line: *"the audit trail for plant supervisors, quality, and IATF 16949 / ISO 9001 auditors — zero extra code."*
 
 ---
 
@@ -349,7 +351,7 @@ Full file: [flink/job.sql](flink/job.sql). Paste into Confluent Cloud → Flink 
 
 **Sink table** (`learner_recommendations`) writes `learner.recommendations` in `json-registry` format.
 
-**Primary path** — enrich each event with an AI-generated next-lesson prompt via `ML_PREDICT`:
+**Primary path** — enrich each event with an AI-generated next-drill prompt via `ML_PREDICT`:
 
 ```sql
 INSERT INTO learner_recommendations
@@ -369,12 +371,14 @@ SELECT
     ML_PREDICT(
       'next_lesson_model',
       CONCAT(
-        'You are designing the next 12-minute lesson for a blind learner. ',
-        'Subject: ', meeting.subject, '. ',
+        'You are designing the next 12-minute preventive-maintenance drill for a ',
+        'shop-floor technician at a car manufacturing plant. ',
+        'Station / subject: ', meeting.subject, '. ',
         'Previous score: ', CAST(performance.average_score AS STRING), '/100. ',
-        'Growth areas: ', performance.growth_areas, '. ',
-        'Output ONLY the new tutor system prompt — strict audio-only language, ',
-        'sound-based analogies, ask learner to explain back. No preamble.'
+        'Skill gaps observed last session: ', performance.growth_areas, '. ',
+        'Output ONLY the new coach system prompt — SOP-grade language, station-grounded ',
+        'analogies, cite the relevant PM interval and OEM/IATF reference where applicable, ',
+        'ask the technician to walk the procedure back. No preamble.'
       )
     ),
     12
@@ -448,7 +452,7 @@ open http://localhost:3000
 Optional:
 
 ```bash
-npm run datagen          # pump synthetic learning.events into Kafka for a cohort demo
+npm run datagen          # pump synthetic learning.events into Kafka for a cohort/shift demo
 ```
 
 ---
@@ -465,18 +469,19 @@ npm run datagen          # pump synthetic learning.events into Kafka for a cohor
 
 ---
 
-## 11. Accessibility design
+## 11. Shop-floor UX design
 
-The landing page is designed to work the moment a screen reader lands on it, with **the screen turned off**.
+The landing page is designed for a technician on the line — gloves on, helmet on, often listening through a headset over the PPE.
 
-- One `<main>` landmark, one `<h1>`.
-- `<label for>` on every input — VoiceOver, NVDA, JAWS, TalkBack all announce them.
-- `aria-live="polite" aria-atomic="true"` status region — every state change ("Connecting Aarya...", "Connected. Opening the lesson room now.", "A new lesson is ready") is announced automatically.
-- Native form submit — no JS focus traps, no custom keyboard handling.
-- Big native button.
-- The tutor prompt (`TUTOR_PROMPT` in [src/setup.js:34-59](src/setup.js#L34-L59)) bans visual language: no "see", "look at", "watch", "as you can see", "in the diagram", "on the screen". Substituted with "imagine", "picture in your mind", "feel like", "sounds like". Uses sound-based analogies: clapping rhythms, splitting groups, slicing a chapati, ringing bells.
-- The tutor repeats any explanation after "I don't get it" / "again" / "wait" / silence > 6 seconds. Never sighs, never rushes.
-- The tutor asks the learner to explain it back ("Can you tell me in your own words?") before moving on — the truth test that drives `concept_understood` scoring.
+- One `<main>` landmark, one `<h1>` — a workstation-friendly anchor for any screen reader the kiosk runs.
+- `<label for>` on every input — every station kiosk and tablet announces them.
+- `aria-live="polite" aria-atomic="true"` status region — every state change ("Connecting Aarya...", "Connected. Opening the drill room now.", "A new drill is ready") is announced over the headset automatically.
+- Native form submit — no JS focus traps, no custom keyboard handling, works with a single-button line-side actuator.
+- Big native button — usable with gloved hands.
+- The coach prompt speaks SOP language: cites OEM service interval (daily / shift / weekly / monthly / yearly), IATF 16949 clauses where relevant, LOTO sequence, torque-to-spec values, vibration signature, thermal imaging, MTBF / MTTR. Uses station-grounded analogies: a press die's heartbeat, the hum of a healthy servo, the rhythm of a balanced robot arm.
+- The coach repeats any explanation after "I don't get it" / "again" / "wait" / silence > 6 seconds. Never sighs, never rushes — technicians are often on the line under time pressure.
+- The coach asks the technician to walk the procedure back ("Can you walk me through your first move in your own words?") before moving on — the truth test that drives `procedure_understood` scoring.
+- Safety-first: never bypass LOTO, never advise running a station with a known fault code. If a question implies an unsafe shortcut, redirect to the safe SOP.
 
 ---
 
@@ -484,8 +489,8 @@ The landing page is designed to work the moment a screen reader lands on it, wit
 
 - `.env` holds live WaterrAI + Confluent + Schema Registry credentials. Never log, echo, or commit.
 - The webhook uses raw-body HMAC verification with constant-time comparison (`crypto.timingSafeEqual`). When `WATERR_WEBHOOK_SECRET` is unset, the check is skipped with a warning — **dev only**.
-- The catch-all reverse proxy in `server.js` forwards arbitrary paths to `waterr.ai`. It strips `host`, `connection`, `content-length` from inbound headers and `X-Frame-Options`, `Content-Security-Policy`, `content-encoding`, `content-length`, `transfer-encoding`, `connection` from upstream responses. The synthetic learner-identity injection for `POST /backend/auth/end-user` only fills missing `email`/`firstName`/`lastName` fields — it does not overwrite real values.
-- Partition key is `learner.id`. If you start storing PII on the wire, hash it (or use a stable anonymous id like the current `learner_anon_*` shape).
+- The catch-all reverse proxy in `server.js` forwards arbitrary paths to `waterr.ai`. It strips `host`, `connection`, `content-length` from inbound headers and `X-Frame-Options`, `Content-Security-Policy`, `content-encoding`, `content-length`, `transfer-encoding`, `connection` from upstream responses. The synthetic technician-identity injection for `POST /backend/auth/end-user` only fills missing `email`/`firstName`/`lastName` fields — it does not overwrite real values.
+- Partition key is `learner.id` (= technician id). If you store employee numbers or other PII on the wire, hash them (or use a stable anonymous id like the current `tech_anon_*` shape).
 
 ---
 
@@ -493,14 +498,14 @@ The landing page is designed to work the moment a screen reader lands on it, wit
 
 | Time | What you do | What the judges see |
 |------|-------------|---------------------|
-| 00:00 | Open the landing page, **dim the screen to zero**, enable macOS VoiceOver. | Screen reader announces "Maverick — Your Patient Audio Tutor. Your name, edit text." |
-| 00:20 | Type "Asha", subject "fractions", press Enter. | Status region announces "Connected. Opening the lesson room now." |
-| 00:30 | Aarya greets in a warm voice. You play Asha and say "I don't get denominators". Aarya re-teaches with audible analogies. End the call after ~90s. | Live voice tutor; no visual cues; aria-live narration the whole way. |
-| 02:00 | Switch to Confluent Cloud → Flink. Show `learning.events` receiving the event live. Show `learner.recommendations` getting a row 5–10s later. | Stream visibly carrying the lesson; `next_scenario_prompt` is the AI-generated next lesson. |
-| 02:30 | The page (still up, screen still off) announces "A new lesson is ready — opening now." Iframe swaps to the new scenario. Aarya immediately re-teaches denominators with a *new* angle. | The whole adaptive loop closes live, with no clicks. |
-| 02:55 | Show the Iceberg table via Tableflow. | "This is the audit trail for parents and teachers." |
+| 00:00 | Open the landing page on the workstation kiosk. Headset on, hands behind the back (simulating gloves on). | Page announces "Maverick — Preventive Maintenance Coach. Your name, edit text." |
+| 00:20 | Enter "Ravi", station "hydraulic press daily PM", press Enter. | Status region announces "Connected. Opening the drill room now." |
+| 00:30 | Aarya greets in a clear coaching voice. You play Ravi and say "I always get tripped up on the LOTO sequence on the isolation valve". Aarya re-teaches the LOTO sequence step by step, citing the OEM daily PM interval. End the call after ~90s. | Live voice coach; SOP-grade language; aria-live narration the whole way. |
+| 02:00 | Switch to Confluent Cloud → Flink. Show `learning.events` receiving the event live. Show `learner.recommendations` getting a row 5–10s later. | Stream visibly carrying the session; `next_scenario_prompt` is the AI-generated next drill. |
+| 02:30 | The page (still up) announces "A new drill is ready — opening now." Iframe swaps to the new scenario. Aarya immediately re-teaches the LOTO sequence with a *new* approach — a step-by-step call-and-response. | The whole adaptive loop closes live, with no clicks. |
+| 02:55 | Show the Iceberg table via Tableflow. | "This is the audit trail for plant supervisors, quality, and IATF auditors." |
 
-Close with: *"The learner never saw a screen. The Confluent stream made the lesson adapt in seconds, not days."*
+Close with: *"The technician's hands stayed on the tools. The Confluent stream made the next drill adapt in seconds, not after the next monthly training cycle."*
 
 ---
 
@@ -508,10 +513,10 @@ Close with: *"The learner never saw a screen. The Confluent stream made the less
 
 In order — drop right-to-left if you slip:
 
-1. **Drop SMS** — replaced by SSE on the landing page. Already default.
+1. **Drop SMS** — replaced by SSE on the kiosk page. Already default.
 2. **Drop Tableflow** — claim as roadmap. (Saves 2 minutes of UI clicking.)
 3. **Skip Flink `ML_PREDICT`** — set `USE_NODE_TRANSFORMER=true` and let Node call Claude when it consumes the message. Loses the "AI inside the stream" wow factor but still works.
-4. **Hardcode one scenario** — skip `create-with-gpt` and pass the next-lesson hints via `note_context` into the same scenario. Lower polish, still demos.
+4. **Hardcode one scenario** — skip `create-with-gpt` and pass the next-drill hints via `note_context` into the same scenario. Lower polish, still demos.
 
 Known issues to be aware of:
 

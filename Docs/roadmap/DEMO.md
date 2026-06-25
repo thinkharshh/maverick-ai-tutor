@@ -1,8 +1,8 @@
-# DEMO — Maverick AI Tutor (3-minute screen-off run)
+# DEMO — Maverick · Preventive Maintenance Coach (3-minute hands-busy run)
 
 **Audience:** Confluent AI Day 2026 India judges.
-**One-line pitch:** "A voice-first AI tutor for blind learners — Kafka + Flink turn every conversation into the next, more personal, lesson."
-**Format:** screen-off. The laptop screen is dimmed to zero; macOS VoiceOver drives the page. We narrate; the judges hear the loop work; we then turn the screen back on to show Confluent Cloud as proof.
+**One-line pitch:** "A voice-first AI coach for shop-floor preventive-maintenance training in a car-manufacturing plant — Kafka + Flink turn every drill into the next, more targeted, drill."
+**Format:** hands-busy at a workstation kiosk. The laptop is set up as a line-side station — headset on, hands clasped behind the back (gloves on). We narrate; the judges hear and see the coach work the technician through a procedure; we then pivot to Confluent Cloud as proof.
 
 This script is the source of truth. Do not improvise commands at the booth.
 
@@ -46,59 +46,57 @@ Note: `POST /meetings` returns 422 (Waterr server-side `billing_id` bug — see 
 
 ## 1. The 3-minute script
 
-### 00:00–00:25 · Open with the screen off
+### 00:00–00:25 · Open at the workstation kiosk
 
 **Do:**
-- Cmd-F5 to enable macOS VoiceOver.
-- Drag screen brightness slider to zero. Tilt the screen down so the room can see you, not the pixels.
-- Bring focus to the Chrome window pointed at `http://localhost:3000`.
+- Headset on. Hands clasped behind your back (simulating gloves on the line).
+- Bring the workstation kiosk window to the foreground (Chrome at `http://localhost:3000`).
 
-**Say:** "I'm going to give my laptop to a blind student. The screen is off. From this moment on, I'm relying entirely on what they would hear."
+**Say:** "I'm at a workstation kiosk on the shop floor. Headset on, gloves on, hands behind my back. From here on, I'm relying on what a technician on the line would hear and tap with a single gloved finger."
 
-**Expect to hear (VoiceOver reads aloud):**
-> "Maverick — Your Patient Audio Tutor, heading level 1."
-> "Press the button below to start a tutoring session…"
+**Expect to hear (page narrates via aria-live):**
+> "Maverick — Preventive Maintenance Coach, heading level 1."
+> "Press the button below to start a preventive-maintenance drill…"
 > "Your name, edit text, required."
 
 ### 00:25–00:50 · Submit the form
 
 **Do:**
-- VO-Right-Arrow until VO says "Your name, edit text". Type `Asha`.
-- VO-Right-Arrow to "What would you like to learn, edit text". Leave the default `math: fractions`. (Or type `capital markets` to better match the scenario name.)
-- VO-Right-Arrow to "Start lesson, button". Press VO-Space.
+- Move to "Your name, edit text". Enter `Ravi`.
+- Move to "Which station / procedure are you drilling today?". Leave the default `press.hydraulic.daily-pm` (or pick `weld.robot.spot-weld` or `paint.booth.shift-pm` from the suggested list).
+- Move to "Start drill, button". Press it.
 
 **Expect to hear:**
 > "Connecting Aarya — one moment."
-> (~400 ms later) "Connected. Opening the lesson room now."
+> (~400 ms later) "Connected. Opening the drill room now."
 
-The page navigates to `https://waterr.ai/scenario/<SCENARIO_ID>` (the share-URL fallback). The Waterr lobby loads and connects audio. The judges hear Aarya/Alex greet Asha in a warm voice.
+The page navigates to `https://waterr.ai/scenario/<SCENARIO_ID>` (the share-URL fallback). The Waterr lobby loads and connects audio. The judges hear Aarya, the senior PM coach, greet Ravi in a clear coaching voice.
 
-### 00:50–01:50 · Have the conversation, then intentionally fail
+### 00:50–01:50 · Walk the procedure, then intentionally trip up
 
-**Do:** speak as the learner. Say: "Hi — I want to understand stocks but honestly I don't get it at all."
+**Do:** speak as the technician. Say: "Hi — I'm on the 800-ton hydraulic press today. Honest answer, I always get the LOTO sequence on the isolation valve wrong."
 
-**Aarya:** explains stocks with an audible analogy (pie slices). Asks Asha to explain it back.
+**Aarya:** walks the LOTO sequence step by step — lockout, tag, try, then bleed pressure — citing the OEM daily PM interval. Asks Ravi to walk back the first three moves.
 
-**Do (intentionally fail):** Say, hesitantly: "I think… maybe… I don't actually know. Sorry."
+**Do (intentionally trip up):** Say, hesitantly: "I think… maybe… lockout first, then bleed? Sorry, I'd skip the try-step."
 
-**Aarya:** patiently re-teaches with a *different* analogy (groups of marbles you can count by sound).
+**Aarya:** patiently re-teaches the LOTO sequence with a *different* approach — a step-by-step call-and-response, and a clear "never bypass the try-step" safety beat. Cites IATF 16949 clause 7.1.5.2 on monitoring equipment.
 
-**Do (after ~60–75 seconds, around the 01:50 mark):** end the call from inside the Waterr room — there's a hangup button in the lobby UI; VoiceOver announces it as "End meeting, button".
+**Do (after ~60–75 seconds, around the 01:50 mark):** end the call from inside the Waterr room — there's a hangup button in the lobby UI ("End meeting, button").
 
-**Say while the call is ending:** "Notice she never said 'see' or 'look at'. Every analogy was something you could hear or feel."
+**Say while the call is ending:** "Notice she never told him to bypass the try-step or rush. Every prompt was the OEM daily PM language — the exact words the line lead would say."
 
-### 01:50–02:25 · Turn the screen ON. Confluent Cloud, topic 1.
+### 01:50–02:25 · Pivot to Confluent Cloud, topic 1.
 
 **Do:**
-- Brightness back to 100. Cmd-F5 off VoiceOver.
 - Switch to the Confluent Cloud browser, `learning.events → Messages` tab.
 - Cmd-R the messages tab if the tail hasn't auto-updated.
 
 **Expect to see:** a new row arrive — typically within 10–30s of hanging up (Waterr fires `session.analysis_complete` once post-call scoring is done; our `/webhook/waterr` route produces to `learning.events`).
 
 **Point at, on screen:**
-- The `key` column = the learner_id.
-- The `value` column — click it to expand. Highlight `meeting.subject`, `performance.average_score`, `performance.growth_areas`. Say: "This is the structured event Confluent now owns. Waterr does the conversation; Confluent owns the *signal*."
+- The `key` column = the technician id (`learner_id` in the schema, read as `tech_id`).
+- The `value` column — click it to expand. Highlight `meeting.subject` (= the station / procedure), `performance.average_score`, `performance.growth_areas` (= observed skill gaps). Say: "This is the structured drill outcome Confluent now owns. Waterr does the live coaching; Confluent owns the *signal* — what every technician on every shift got wrong."
 
 If no row arrives by 02:10 (Waterr post-call scoring sometimes lags), have a pre-recorded `learning.events` row pinned in a second tab labeled "previous run" — and pivot the script with: "Here's the event from the dry-run a minute before — same shape, same topic." The judges still see real data.
 
@@ -107,25 +105,25 @@ If no row arrives by 02:10 (Waterr post-call scoring sometimes lags), have a pre
 **Do:** click the `learner.recommendations` tab. A new row should appear 5–15 seconds after the `learning.events` row.
 
 **Point at, on screen:**
-- The `value.recommendation.difficulty` field — likely `"easier"` because Asha scored low.
-- The `value.recommendation.next_scenario_prompt` field — fully formed English describing the *next* lesson, generated by Flink + Claude. Highlight the audio-only constraint phrasing.
+- The `value.recommendation.difficulty` field — likely `"easier"` because Ravi scored low on the LOTO step.
+- The `value.recommendation.next_scenario_prompt` field — fully formed English describing the *next* PM drill, generated by Flink + Claude. Highlight the SOP-grade phrasing — OEM PM interval, IATF clause, safety-first language.
 
-**Say:** "Flink read the event, called Claude inside the stream, and wrote a fully formed next-lesson prompt. No glue code in our app — the stream is doing the thinking."
+**Say:** "Flink read the event, called Claude inside the stream, and wrote a fully formed next-drill prompt — exactly the words a senior PM coach would use. No glue code in our app — the stream is doing the thinking."
 
-(Production-shaped note for the judges: we briefly mention that for this demo build the transform runs in Node (`src/recommender.js`) since Confluent Schema Registry + JSON Schema registration for raw JSON topics wasn't worth setting up under the time box; `flink/job.sql` is the same logic, paste-ready, and is the architecture we'd ship. Frame it as: "Same SQL contract, same topics — Flink in prod, Node for the live demo.")
+(Production-shaped note for the judges: we briefly mention that for this demo build the transform runs in Node (`src/recommender.js`) since Confluent Schema Registry + JSON Schema registration for raw JSON topics wasn't worth setting up under the time box; `flink/job.sql` is the same logic, paste-ready, and is the architecture we'd ship to the plant. Frame it as: "Same SQL contract, same topics — Flink in prod, Node for the live demo.")
 
-### 02:50–03:00 · Back to the learner — SSE fires
+### 02:50–03:00 · Back to the workstation kiosk — SSE fires
 
 **Do:**
-- Switch back to the learner browser tab (it's still on the page; the lobby tab closed itself when the call ended OR we keep both windows side-by-side).
-- The page should already have received an SSE `recommendation` event and rendered a `<p>Your next lesson is ready. <a>Open the new lesson room.</a></p>` block under "Suggested next lesson".
+- Switch back to the kiosk browser tab (it's still on the page; the lobby tab closed itself when the call ended OR we keep both windows side-by-side).
+- The page should already have received an SSE `recommendation` event and rendered a `<p>Your next drill is ready. <a>Open the new drill room.</a></p>` block under "Suggested next drill".
 
-**Expect to hear** (briefly turn VoiceOver back on or just let aria-live announce):
-> "Your next lesson is ready. Open the new lesson room, link."
+**Expect to hear** (via aria-live over the headset):
+> "Your next drill is ready. Open the new drill room, link."
 
-**Do:** click the link. A new Waterr room opens, this time tuned to "easier" with the AI-generated prompt.
+**Do:** click the link. A new Waterr room opens, this time tuned to "easier" with the AI-generated PM drill prompt.
 
-**Say (close):** "The screen was off the whole time. The student finished one lesson, and 20 seconds later a new one — shaped by what they got wrong — was waiting. That's Confluent doing in seconds what a classroom does in weeks."
+**Say (close):** "The technician's hands stayed on the tools the whole time. He finished one drill, and 20 seconds later a new one — shaped by exactly the step he got wrong — was waiting. That's Confluent doing in seconds what a monthly training cycle does in weeks."
 
 ---
 
@@ -150,7 +148,7 @@ Ordered most-acceptable-to-cut first. Right-to-left means "if you must cut, cut 
 2. **Flink workspace tour** (we already say the transform runs in Node for this demo).
 3. **`learner.recommendations` topic UI** (the SSE notification on the page is enough — the recommender wrote *something*).
 4. **`learning.events` topic UI** (last to cut — this is the proof that Confluent is actually receiving anything).
-5. **The screen-off framing** (NEVER cut — this is the story).
+5. **The hands-busy / workstation-kiosk framing** (NEVER cut — this is the story).
 6. **The live Waterr call** (NEVER cut — without it nothing else fires).
 
 ---
@@ -197,6 +195,6 @@ curl -sX POST http://localhost:3000/internal/push \
 
 ## 6. What we are NOT demoing (and why, when asked)
 
-- **Twilio SMS** — replaced by SSE on the page; one fewer credential to manage live; the architecture supports SMS verbatim by swapping the delivery function in `src/recommender.js`.
-- **Flink `ML_PREDICT` live** — paste-ready in `flink/job.sql`; for the demo build we ran the same transform in Node because raw-JSON topics need Schema Registry + a JSON Schema registration to be Flink-readable, which is a setup tax we're not paying under the time box. The SQL is the prod path.
-- **Hindi voice fall-through, parent dashboard, PWA, dataset release** — roadmap, see `PLAN.md §Features beyond demo`.
+- **Twilio SMS** — replaced by SSE on the kiosk page; one fewer credential to manage live; the architecture supports SMS verbatim by swapping the delivery function in `src/recommender.js`.
+- **Flink `ML_PREDICT` live** — paste-ready in `flink/job.sql`; for the demo build we ran the same transform in Node because raw-JSON topics need Schema Registry + a JSON Schema registration to be Flink-readable, which is a setup tax we're not paying under the time box. The SQL is the prod path we'd ship to the plant.
+- **Hindi / Tamil / Marathi voice fall-through, plant-supervisor + quality dashboard, PWA, anonymized PM dataset release** — roadmap, see `PLAN.md §Features beyond demo`.
