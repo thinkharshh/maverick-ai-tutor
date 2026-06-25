@@ -9,28 +9,22 @@
   <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
   <style>
     :root {
-      --bg-0: #06080f;
-      --bg-1: #0c1120;
-      --bg-2: #131a30;
-      --bg-3: #1a2240;
-      --line: #232b4d;
-      --fg:   #e7eaf4;
-      --fg-2: #a4adcc;
-      --fg-3: #6b7497;
+      color-scheme: light;
+      --bg-0: #f7f8fc;
+      --bg-1: #ffffff;
+      --bg-2: #f1f3fb;
+      --bg-3: #e7ecf8;
+      --line: #d8def0;
+      --fg:   #0e1430;
+      --fg-2: #4a5478;
+      --fg-3: #7783a3;
       --a1:   #8aa6ff;
       --a2:   #c084ff;
       --ok:   #4ade80;
       --warn: #fbbf24;
       --r-md: 12px;
       --r-lg: 18px;
-      --shadow: 0 24px 60px -20px rgba(0,0,0,.55), 0 8px 24px -12px rgba(0,0,0,.35);
-    }
-    @media (prefers-color-scheme: light) {
-      :root {
-        --bg-0: #f7f8fc; --bg-1: #ffffff; --bg-2: #f1f3fb; --bg-3: #e7ecf8;
-        --line: #d8def0; --fg: #0e1430; --fg-2: #4a5478; --fg-3: #7783a3;
-        --shadow: 0 22px 60px -20px rgba(16,24,64,.18), 0 6px 18px -8px rgba(16,24,64,.12);
-      }
+      --shadow: 0 22px 60px -20px rgba(16,24,64,.18), 0 6px 18px -8px rgba(16,24,64,.12);
     }
     * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
     html, body { margin: 0; padding: 0; }
@@ -51,13 +45,13 @@
     }
     body::before, body::after {
       content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
-      filter: blur(60px); opacity: .55;
+      filter: blur(70px); opacity: .35;
     }
     body::before {
-      background: radial-gradient(50% 50% at 18% 22%, rgba(138,166,255,.45) 0%, transparent 70%);
+      background: radial-gradient(50% 50% at 18% 22%, rgba(138,166,255,.55) 0%, transparent 70%);
     }
     body::after {
-      background: radial-gradient(45% 50% at 82% 12%, rgba(192,132,255,.40) 0%, transparent 70%);
+      background: radial-gradient(45% 50% at 82% 12%, rgba(192,132,255,.55) 0%, transparent 70%);
     }
 
     nav { max-width: 1180px; margin: 0 auto; padding: 22px 24px 0;
@@ -115,30 +109,41 @@
     .card h2 { margin: 0 0 6px; font-size: 22px; font-weight: 700; letter-spacing: -0.018em; }
     .card .desc { margin: 0 0 18px; color: var(--fg-2); font-size: 14.5px; }
 
-    /* embed card */
-    .embed-card {
+    /* CTA card */
+    .cta-card {
       position: relative;
-      background: var(--bg-1); border: 1px solid var(--line); border-radius: var(--r-lg);
-      box-shadow: var(--shadow); overflow: hidden;
+      background: linear-gradient(180deg, var(--bg-1), var(--bg-2));
+      border: 1px solid var(--line); border-radius: var(--r-lg);
+      padding: 32px; box-shadow: var(--shadow);
+      display: flex; flex-direction: column; gap: 18px;
     }
-    .embed-bar {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 16px; background: linear-gradient(180deg, var(--bg-2), var(--bg-1));
-      border-bottom: 1px solid var(--line);
+    .cta-card::after {
+      content:""; position:absolute; inset:0; border-radius: inherit; pointer-events:none;
+      background: radial-gradient(120% 80% at 50% 0%, rgba(138,166,255,.08), transparent 60%);
     }
-    .embed-bar .who { display: flex; align-items: center; gap: 10px; }
-    .embed-bar .who .av {
-      width: 30px; height: 30px; border-radius: 50%;
+    .cta-card .who { display: flex; align-items: center; gap: 12px; position: relative; }
+    .cta-card .who .av {
+      width: 38px; height: 38px; border-radius: 50%;
       background: conic-gradient(from 200deg, var(--a1), var(--a2), var(--a1));
       box-shadow: inset 0 0 0 1px rgba(255,255,255,.2);
     }
-    .embed-bar .who b { font-weight: 700; }
-    .embed-bar .who small { color: var(--fg-3); display: block; font-size: 11.5px; margin-top: -2px; }
-    .embed-frame {
-      width: 100%; height: min(78vh, 720px); border: 0; background: #000;
-      display: block;
+    .cta-card .who b { font-weight: 700; font-size: 16px; display: block; }
+    .cta-card .who small { color: var(--fg-3); display: block; font-size: 12px; margin-top: 2px; }
+    .cta-card .desc { margin: 0; color: var(--fg-2); font-size: 14.5px; position: relative; }
+    .cta-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      align-self: flex-start; position: relative;
+      padding: 14px 22px; border-radius: 12px;
+      background: linear-gradient(120deg, var(--a1), var(--a2));
+      color: #0b0f22; font-weight: 700; font-size: 15px; letter-spacing: -0.01em;
+      text-decoration: none; border: 0; cursor: pointer;
+      box-shadow: 0 12px 30px -12px rgba(138,166,255,.55);
+      transition: transform .15s ease, box-shadow .15s ease;
     }
-    @media (max-width: 880px) { .embed-frame { height: 70vh; } }
+    .cta-btn:hover { transform: translateY(-1px); box-shadow: 0 18px 40px -14px rgba(138,166,255,.7); }
+    .cta-btn:active { transform: translateY(0); }
+    .cta-btn .arrow { font-size: 18px; line-height: 1; }
+    .cta-note { color: var(--fg-3); font-size: 12.5px; margin: 0; position: relative; }
 
     .arch h3 { margin: 0 0 14px; font-size: 12.5px; text-transform: uppercase;
                letter-spacing: .14em; color: var(--fg-3); font-weight: 700; }
@@ -182,7 +187,97 @@
       .reveal.d2 { animation-delay: .12s; }
       .reveal.d3 { animation-delay: .22s; }
       .reveal.d4 { animation-delay: .32s; }
+      .reveal.d5 { animation-delay: .42s; }
       @keyframes rise { to { opacity: 1; transform: translateY(0); } }
+    }
+
+    /* ----- Tech architecture · Confluent journey ----- */
+    .journey { margin-top: 56px; }
+    .journey-head { max-width: 72ch; margin: 0 0 26px; }
+    .kicker {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .14em; color: var(--a1);
+      padding: 4px 10px; border-radius: 999px;
+      background: rgba(138,166,255,.10);
+      border: 1px solid rgba(138,166,255,.25);
+    }
+    .journey-head h2 {
+      font-size: clamp(26px, 3.4vw, 36px); margin: 14px 0 10px;
+      font-weight: 800; letter-spacing: -0.025em; line-height: 1.1;
+    }
+    .journey-head p { margin: 0; color: var(--fg-2); font-size: 15.5px; max-width: 66ch; }
+
+    .pipeline {
+      display: grid; gap: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      list-style: none; padding: 0; margin: 0 0 22px;
+    }
+    .pipeline .stage {
+      position: relative;
+      background: linear-gradient(180deg, var(--bg-2), var(--bg-1));
+      border: 1px solid var(--line); border-radius: var(--r-md);
+      padding: 18px 16px 16px;
+    }
+    .pipeline .stage::before {
+      content: attr(data-step);
+      position: absolute; top: -10px; left: 14px;
+      background: var(--bg-0); color: var(--a1);
+      border: 1px solid rgba(138,166,255,.4);
+      font-size: 10.5px; font-weight: 700; letter-spacing: .12em;
+      padding: 3px 8px; border-radius: 999px; text-transform: uppercase;
+    }
+    .pipeline .stage.flink {
+      border-color: rgba(138,166,255,.55);
+      background: linear-gradient(180deg, rgba(138,166,255,.12), var(--bg-1));
+      box-shadow: 0 0 0 1px rgba(138,166,255,.20),
+                  0 16px 50px -20px rgba(138,166,255,.40);
+    }
+    .pipeline .stage.flink::before {
+      background: var(--a1); color: var(--bg-0); border-color: var(--a1);
+    }
+    .pipeline .stage b { display: block; margin: 2px 0 6px; font-size: 14.5px; line-height: 1.25; }
+    .pipeline .stage p { margin: 0 0 8px; font-size: 12.5px; color: var(--fg-2); line-height: 1.5; }
+    .pipeline .stage code {
+      font-size: 11px; color: var(--a1);
+      background: var(--bg-1); padding: 1px 6px; border-radius: 5px;
+    }
+
+    .audit {
+      display: grid; grid-template-columns: auto 1fr; gap: 14px 18px;
+      align-items: start;
+      background: linear-gradient(180deg, var(--bg-1), var(--bg-2));
+      border: 1px solid var(--line); border-radius: var(--r-md);
+      padding: 18px; margin-bottom: 30px;
+    }
+    .audit .kicker {
+      color: var(--a2);
+      background: rgba(192,132,255,.10);
+      border-color: rgba(192,132,255,.30);
+    }
+    .audit b { display: block; font-size: 15px; margin: 2px 0 4px; }
+    .audit p { margin: 0; color: var(--fg-2); font-size: 13.5px; line-height: 1.55; }
+    .audit em { color: var(--fg); font-style: normal; font-weight: 600; }
+    @media (max-width: 560px) {
+      .audit { grid-template-columns: 1fr; }
+    }
+
+    .components-h {
+      margin: 26px 0 12px; font-size: 12.5px; text-transform: uppercase;
+      letter-spacing: .14em; color: var(--fg-3); font-weight: 700;
+    }
+    .components {
+      display: grid; gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+    .comp {
+      background: var(--bg-3); border: 1px solid var(--line);
+      border-radius: var(--r-md); padding: 14px 16px;
+    }
+    .comp b { display: block; font-size: 14px; margin-bottom: 4px; }
+    .comp small { color: var(--fg-2); font-size: 12.5px; line-height: 1.5; display: block; }
+    .comp code {
+      font-size: 11px; color: var(--a1);
+      background: var(--bg-1); padding: 1px 5px; border-radius: 5px;
     }
   </style>
 </head>
@@ -208,20 +303,22 @@
     </p>
 
     <div class="layout">
-      <section class="embed-card reveal d4" aria-labelledby="embed-h">
-        <div class="embed-bar">
-          <div class="who">
-            <span class="av" aria-hidden="true"></span>
-            <div><b id="embed-h">Preventive maintenance · Live scenario</b><small>Microphone + camera permissions may be requested.</small></div>
-          </div>
+      <section class="cta-card reveal d4" aria-labelledby="cta-h">
+        <div class="who">
+          <span class="av" aria-hidden="true"></span>
+          <div><b id="cta-h">Preventive maintenance · Live scenario</b><small>Voice-first drill with Aarya, your senior PM coach.</small></div>
         </div>
-        <iframe
-          class="embed-frame"
-          src="/harshit/preventive-maintenance-best-practices"
-          title="Preventive Maintenance Best Practices"
-          allow="camera; microphone; autoplay; display-capture; fullscreen; clipboard-read; clipboard-write"
-          allowfullscreen
-        ></iframe>
+        <p class="desc">
+          Step onto the shop floor and run a live, hands-busy training session.
+          Aarya will walk you through a station-specific PM drill in real time.
+        </p>
+        <a
+          class="cta-btn"
+          href="https://waterr.ai/harshit/preventive-maintenance-best-practices"
+          target="_blank"
+          rel="noopener noreferrer"
+        >Run Training now <span class="arrow" aria-hidden="true">→</span></a>
+        <p class="cta-note">Opens in a new tab. Microphone + camera permissions may be requested.</p>
       </section>
 
       <aside class="card arch reveal d4" aria-labelledby="arch-h">
@@ -273,6 +370,93 @@
         </p>
       </aside>
     </div>
+
+    <section class="journey reveal d5" aria-labelledby="journey-h">
+      <header class="journey-head">
+        <span class="kicker">Tech architecture</span>
+        <h2 id="journey-h">The full Confluent journey — voice session to the next drill, in seconds.</h2>
+        <p>
+          Every preventive-maintenance drill on the floor becomes a stream event, gets enriched
+          by Claude <em>inside</em> Flink, lands in Iceberg for the IATF&nbsp;16949 / ISO&nbsp;9001 audit
+          trail, and triggers a freshly tailored follow-up scenario — all on Confluent Cloud,
+          while the technician is still walking back the last procedure.
+        </p>
+      </header>
+
+      <ol class="pipeline" aria-label="End-to-end data flow">
+        <li class="stage" data-step="Step 1 · Voice">
+          <b>Technician + Aarya on the line</b>
+          <p>WaterrAI hosts a Daily.co WebRTC room with Aarya, the senior PM coach persona. She drills one station (LOTO, hydraulic press, paint booth…) and scores three goals at session end.</p>
+          <code>persona · scenario · goals</code>
+        </li>
+        <li class="stage" data-step="Step 2 · Bridge">
+          <b>Webhook → Kafka producer</b>
+          <p>An HMAC-verified webhook in <code>server.js</code> converts <code>session.analysis_complete</code> into a <code>LearningEvent</code> envelope and produces to Kafka via KafkaJS over TLS+SASL.</p>
+          <code>POST /webhook/waterr</code>
+        </li>
+        <li class="stage" data-step="Step 3 · Ingest">
+          <b><code>learning.events</code> topic</b>
+          <p>Partitioned by <code>learner.id</code> for per-technician ordering. Avro-validated against a Schema Registry contract — forward / backward compatible across plant rollouts.</p>
+          <code>key = learner.id · 7d retention</code>
+        </li>
+        <li class="stage flink" data-step="Step 4 · Brain">
+          <b>Flink SQL + <code>ML_PREDICT</code></b>
+          <p>A single watermarked SQL job reads each event, scores difficulty from <code>average_score</code>, and calls Claude <em>inside the stream</em> via Confluent AI Model Inference to author the next coach prompt. No separate AI service.</p>
+          <code>ML_PREDICT('next_lesson_model', …)</code>
+        </li>
+        <li class="stage" data-step="Step 5 · Emit">
+          <b><code>learner.recommendations</code> topic</b>
+          <p>Carries the next adaptive drill — <code>difficulty</code>, <code>next_scenario_prompt</code>, <code>estimated_duration_min</code> — keyed by the same technician id so ordering survives.</p>
+          <code>difficulty · next_scenario_prompt</code>
+        </li>
+        <li class="stage" data-step="Step 6 · Close loop">
+          <b>Recommender → new Waterr meeting</b>
+          <p><code>recommender.js</code> consumes the recommendation, spins a fresh scenario via Waterr's <code>/scenarios/create-with-gpt</code>, and pushes the join URL back to the kiosk over Server-Sent Events — the headset reads it aloud.</p>
+          <code>SSE · /scenarios/create-with-gpt</code>
+        </li>
+      </ol>
+
+      <aside class="audit" aria-label="Tableflow audit trail">
+        <span class="kicker">In parallel</span>
+        <div>
+          <b>Tableflow → Iceberg, both topics, one click</b>
+          <p>
+            <code>learning.events</code> and <code>learner.recommendations</code> are materialised as
+            Apache Iceberg tables with zero extra code. Every drill outcome and every AI-authored
+            follow-up becomes a queryable, time-travelled audit row.
+            <em>The IATF&nbsp;16949 / ISO&nbsp;9001 audit trail for plant quality + supervisors — for free.</em>
+          </p>
+        </div>
+      </aside>
+
+      <h3 class="components-h">Confluent Cloud surface area we actually touch</h3>
+      <div class="components">
+        <div class="comp">
+          <b>Apache Kafka</b>
+          <small>Two topics, <code>learner.id</code> as partition key, 7-day retention. The system's spine.</small>
+        </div>
+        <div class="comp">
+          <b>Schema Registry (Avro)</b>
+          <small>Versioned contracts for <code>LearningEvent</code> + <code>LessonRecommendation</code> — safe schema evolution across plants.</small>
+        </div>
+        <div class="comp">
+          <b>Flink SQL</b>
+          <small>Watermarked source table + stateful enrichment + <code>ML_PREDICT</code> in a single declarative job (<code>flink/job.sql</code>).</small>
+        </div>
+        <div class="comp">
+          <b>AI Model Inference</b>
+          <small>Anthropic Claude registered as <code>next_lesson_model</code> inside Confluent — invoked directly from Flink SQL.</small>
+        </div>
+        <div class="comp">
+          <b>Tableflow (Iceberg)</b>
+          <small>One-click materialisation of both topics into Iceberg — audit-ready for plant quality + ISO / IATF reviewers.</small>
+        </div>
+        <div class="comp">
+          <b>Kafka Connect</b>
+          <small>Datagen source primes the dashboard for warm-up demos; HTTP sink fans drill links out to the kiosk SSE channel.</small>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer>
